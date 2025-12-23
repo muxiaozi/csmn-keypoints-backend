@@ -25,7 +25,8 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { token } = req.query;
 
-    if (token != "XjCwXGOo2M1Dtk7FfMbmjafnHXVSEElJ") {
+    // HACK: 临时使用token验证身份，后续改为JWT
+    if (token != process.env.API_ACCESS_TOKEN) {
       return forbidden(res);
     }
 
