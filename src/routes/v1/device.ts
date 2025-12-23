@@ -104,31 +104,23 @@ router.post(
       model,
       description,
     } = req.body;
-    const existingDevice = await prisma.device.findUnique({
+    const device = await prisma.device.upsert({
       where: { id },
-    });
-    if (existingDevice) {
-      const updatedDevice = await prisma.device.update({
-        where: { id },
-        data: {
-          name,
-          wifi_mac,
-          flash_size,
-          ram_size,
-          chip_id,
-          reset_reason,
-          idf_version,
-          firmware_version,
-          manufacturer,
-          model,
-          description,
-        },
-      });
-      return success(res, updatedDevice);
-    }
-    const device = await prisma.device.create({
-      data: {
+      create: {
         id,
+        name,
+        wifi_mac,
+        flash_size,
+        ram_size,
+        chip_id,
+        reset_reason,
+        idf_version,
+        firmware_version,
+        manufacturer,
+        model,
+        description,
+      },
+      update: {
         name,
         wifi_mac,
         flash_size,
@@ -161,8 +153,20 @@ router.post(
       return failed(res, "Device not found", 404);
     }
 
-    const record = await prisma.record.create({
-      data: {
+    const record = await prisma.record.upsert({
+      where: {
+        device_id_index: {
+          device_id: id,
+          index: index,
+        },
+      },
+      update: {
+        begin_time: new Date(begin_time),
+        duration_seconds,
+        size_bytes,
+        crc16,
+      },
+      create: {
         index,
         device_id: id,
         begin_time: new Date(begin_time),
@@ -171,6 +175,7 @@ router.post(
         crc16,
       },
     });
+
     return success(res, record);
   })
 );
@@ -191,7 +196,7 @@ router.post(
         },
       },
       data: {
-        url: `${process.env.BASE_URL}/uploads/${req.file!.filename}`,
+        url: `${process.env.BASE_URL}/v1/uploads/${req.file!.filename}`,
         path: `uploads/${req.file!.filename}`,
         status: "PROCESSING",
       },
