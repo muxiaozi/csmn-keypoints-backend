@@ -78,11 +78,11 @@ const formatDateTime = (dateString: string): string => {
 
 const getStatusType = (status: string) => {
   switch (status) {
-    case 'COMPLETED':
+    case 'DONE':
       return 'success';
     case 'PROCESSING':
       return 'warning';
-    case 'FAILED':
+    case 'PROCESS_FAIL':
       return 'danger';
     default:
       return 'info';
@@ -91,11 +91,11 @@ const getStatusType = (status: string) => {
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'COMPLETED':
+    case 'DONE':
       return '已完成';
     case 'PROCESSING':
       return '处理中';
-    case 'FAILED':
+    case 'PROCESS_FAIL':
       return '失败';
     case 'UPLOADING':
       return '上传中';
@@ -124,12 +124,12 @@ const stopAutoRefresh = () => {
 
 onMounted(() => {
   fetchDeviceDetail();
-  startAutoRefresh();
+  // startAutoRefresh();
   window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
-  stopAutoRefresh();
+  // stopAutoRefresh();
   window.removeEventListener('resize', handleResize);
 });
 </script>
@@ -150,60 +150,6 @@ onUnmounted(() => {
       />
 
       <template v-else-if="device">
-        <!-- 基本信息 -->
-        <el-card class="info-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>基本信息</span>
-            </div>
-          </template>
-
-          <el-descriptions :column="descriptionColumns" border>
-            <el-descriptions-item label="设备名称">
-              {{ device.name }}
-            </el-descriptions-item>
-            <el-descriptions-item label="设备ID">
-              {{ device.id }}
-            </el-descriptions-item>
-            <el-descriptions-item label="WiFi MAC">
-              {{ device.wifi_mac }}
-            </el-descriptions-item>
-            <el-descriptions-item label="芯片ID">
-              {{ device.chip_id }}
-            </el-descriptions-item>
-            <el-descriptions-item label="制造商">
-              {{ device.manufacturer }}
-            </el-descriptions-item>
-            <el-descriptions-item label="型号">
-              {{ device.model }}
-            </el-descriptions-item>
-            <el-descriptions-item label="固件版本">
-              {{ device.firmware_version }}
-            </el-descriptions-item>
-            <el-descriptions-item label="IDF版本">
-              {{ device.idf_version }}
-            </el-descriptions-item>
-            <el-descriptions-item label="Flash大小">
-              {{ formatBytes(device.flash_size) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="RAM大小">
-              {{ formatBytes(device.ram_size) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="重启原因">
-              {{ device.reset_reason }}
-            </el-descriptions-item>
-            <el-descriptions-item label="描述" :span="descriptionColumns">
-              {{ device.description }}
-            </el-descriptions-item>
-            <el-descriptions-item label="创建时间">
-              {{ formatDateTime(device.created_at) }}
-            </el-descriptions-item>
-            <el-descriptions-item label="更新时间">
-              {{ formatDateTime(device.updated_at) }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-
         <!-- 录音记录 -->
         <el-card class="records-card" shadow="hover">
           <template #header>
@@ -269,6 +215,60 @@ onUnmounted(() => {
               </el-table-column>
             </el-table>
           </div>
+        </el-card>
+
+        <!-- 基本信息 -->
+        <el-card class="info-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>基本信息</span>
+            </div>
+          </template>
+
+          <el-descriptions :column="descriptionColumns" border>
+            <el-descriptions-item label="设备名称">
+              {{ device.name }}
+            </el-descriptions-item>
+            <el-descriptions-item label="设备ID">
+              {{ device.id }}
+            </el-descriptions-item>
+            <el-descriptions-item label="WiFi MAC">
+              {{ device.wifi_mac }}
+            </el-descriptions-item>
+            <el-descriptions-item label="芯片ID">
+              {{ device.chip_id }}
+            </el-descriptions-item>
+            <el-descriptions-item label="制造商">
+              {{ device.manufacturer }}
+            </el-descriptions-item>
+            <el-descriptions-item label="型号">
+              {{ device.model }}
+            </el-descriptions-item>
+            <el-descriptions-item label="固件版本">
+              {{ device.firmware_version }}
+            </el-descriptions-item>
+            <el-descriptions-item label="IDF版本">
+              {{ device.idf_version }}
+            </el-descriptions-item>
+            <el-descriptions-item label="Flash大小">
+              {{ formatBytes(device.flash_size) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="RAM大小">
+              {{ formatBytes(device.ram_size) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="重启原因">
+              {{ device.reset_reason }}
+            </el-descriptions-item>
+            <el-descriptions-item label="描述" :span="descriptionColumns">
+              {{ device.description }}
+            </el-descriptions-item>
+            <el-descriptions-item label="创建时间">
+              {{ formatDateTime(device.created_at) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="更新时间">
+              {{ formatDateTime(device.updated_at) }}
+            </el-descriptions-item>
+          </el-descriptions>
         </el-card>
       </template>
     </div>

@@ -11,13 +11,9 @@ import {
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-// import { createTask, aiProcessFile } from "./utils/ai.js";
-
 dotenv.config();
 
 const app = express();
-
-// aiProcessFile("https://open.cheshuimanong.com/keypoints/v1/uploads/cc817b6cf0fdfc653b3cc30020b2db9b");
 
 // Prisma客户端初始化
 const connectionString = `${process.env.DATABASE_URL}`;

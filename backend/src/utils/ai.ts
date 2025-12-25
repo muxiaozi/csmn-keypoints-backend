@@ -1,3 +1,4 @@
+import { prisma } from "../app.js";
 import logger from "./logger.js";
 
 type CreateTaskResponse = {
@@ -37,7 +38,10 @@ type TextPolishResponse = Array<{
   end: number;
 }>;
 
-export async function aiProcessFile(fileUrl: string): Promise<boolean> {
+export async function aiProcessFile(
+  fileUrl: string,
+  recordId: string
+): Promise<boolean> {
   // 创建任务
   const createResponse = await createTask(fileUrl);
   if (createResponse?.code !== undefined) {
@@ -74,6 +78,16 @@ export async function aiProcessFile(fileUrl: string): Promise<boolean> {
   }
   const resp = await handleTextPolish(taskResponse.output.textPolishPath);
   console.log("TextPolishResponse:", resp);
+
+  await prisma.record.update({
+    where: {
+      id: recordId,
+    },
+    data: {
+      content: resp[0]?.formalParagraphText || "",
+      status: "DONE",
+    },
+  });
   return true;
 }
 
