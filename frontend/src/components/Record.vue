@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import type { Record, ApiResponse } from '../types/device';
+import { ref, onMounted, computed, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import type { Record, ApiResponse } from "../types/device";
+import MarkdownIt from "markdown-it";
+
+// 初始化 Markdown 解析器
+const md = new MarkdownIt({
+  html: false, // 不允许 HTML 标签
+  linkify: true, // 自动识别链接
+  breaks: true, // 转换换行符为 <br>
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -16,7 +24,7 @@ const error = ref<string | null>(null);
 
 // 响应式列数
 const isMobile = ref(window.innerWidth <= 768);
-const descriptionColumns = computed(() => isMobile.value ? 1 : 2);
+const descriptionColumns = computed(() => (isMobile.value ? 1 : 2));
 
 // 监听窗口大小变化
 const handleResize = () => {
@@ -28,7 +36,9 @@ const fetchRecordDetail = async () => {
   error.value = null;
 
   try {
-    const response = await fetch(`${baseUrl}/v1/devices/${deviceId}/records/${recordId}`);
+    const response = await fetch(
+      `${baseUrl}/v1/devices/${deviceId}/records/${recordId}`
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -43,10 +53,10 @@ const fetchRecordDetail = async () => {
         record.value.keypoints.sort((a, b) => a.timestamp - b.timestamp);
       }
     } else {
-      throw new Error(result.msg || '获取记录详情失败');
+      throw new Error(result.msg || "获取记录详情失败");
     }
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '获取记录详情失败';
+    error.value = err instanceof Error ? err.message : "获取记录详情失败";
     ElMessage.error(error.value);
   } finally {
     loading.value = false;
@@ -54,11 +64,11 @@ const fetchRecordDetail = async () => {
 };
 
 const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 };
 
 const formatDuration = (seconds: number): string => {
@@ -67,9 +77,11 @@ const formatDuration = (seconds: number): string => {
   const secs = seconds % 60;
 
   if (hrs > 0) {
-    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   }
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
 const formatTimestamp = (timestamp: number): string => {
@@ -79,56 +91,66 @@ const formatTimestamp = (timestamp: number): string => {
   const ms = Math.floor((timestamp % 1) * 1000);
 
   if (hrs > 0) {
-    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
   }
-  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}.${ms
+    .toString()
+    .padStart(3, "0")}`;
 };
 
 const formatDateTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleString('zh-CN');
+  return new Date(dateString).toLocaleString("zh-CN");
 };
 
 const getStatusType = (status: string) => {
   switch (status) {
-    case 'COMPLETED':
-      return 'success';
-    case 'PROCESSING':
-      return 'warning';
-    case 'FAILED':
-      return 'danger';
+    case "COMPLETED":
+      return "success";
+    case "PROCESSING":
+      return "warning";
+    case "FAILED":
+      return "danger";
     default:
-      return 'info';
+      return "info";
   }
 };
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'COMPLETED':
-      return '已完成';
-    case 'PROCESSING':
-      return '处理中';
-    case 'FAILED':
-      return '失败';
+    case "COMPLETED":
+      return "已完成";
+    case "PROCESSING":
+      return "处理中";
+    case "FAILED":
+      return "失败";
     default:
       return status;
   }
 };
 
 const audioUrl = computed(() => {
-  return record.value?.url || '';
+  return record.value?.url || "";
 });
 
 const hasKeypoints = computed(() => {
   return record.value?.keypoints && record.value.keypoints.length > 0;
 });
 
+// 将转写内容渲染为 Markdown HTML
+const renderedContent = computed(() => {
+  if (!record.value?.content) return "";
+  return md.render(record.value.content);
+});
+
 onMounted(() => {
   fetchRecordDetail();
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 
@@ -182,7 +204,7 @@ onUnmounted(() => {
             </el-descriptions-item>
             <el-descriptions-item label="说话人" :span="descriptionColumns">
               <span v-if="record.speakers && record.speakers.length > 0">
-                {{ record.speakers.join(', ') }}
+                {{ record.speakers.join(", ") }}
               </span>
               <span v-else class="text-muted">未识别</span>
             </el-descriptions-item>
@@ -198,15 +220,6 @@ onUnmounted(() => {
           <template #header>
             <div class="card-header">
               <span>音频播放</span>
-              <el-button
-                type="primary"
-                size="small"
-                :href="audioUrl"
-                target="_blank"
-                link
-              >
-                下载音频
-              </el-button>
             </div>
           </template>
 
@@ -225,8 +238,7 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <div class="transcription-content">
-            {{ record.content }}
+          <div class="transcription-content markdown-body" v-html="renderedContent">
           </div>
         </el-card>
 
@@ -243,14 +255,15 @@ onUnmounted(() => {
               <el-timeline-item
                 v-for="keypoint in record.keypoints"
                 :key="keypoint.id"
-                :timestamp="formatTimestamp(keypoint.timestamp)"
                 placement="top"
               >
                 <el-card shadow="hover">
                   <div class="keypoint-content">
                     <p class="keypoint-text">{{ keypoint.content }}</p>
                     <div class="keypoint-meta" v-if="keypoint.speaker">
-                      <el-tag size="small" type="info">{{ keypoint.speaker }}</el-tag>
+                      <el-tag size="small" type="info">{{
+                        keypoint.speaker
+                      }}</el-tag>
                     </div>
                   </div>
                 </el-card>
@@ -310,11 +323,160 @@ onUnmounted(() => {
 
 .transcription-content {
   padding: 15px;
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   border-radius: 4px;
   line-height: 1.8;
-  white-space: pre-wrap;
   word-break: break-word;
+  color: var(--el-text-color-primary);
+  text-align: left;
+}
+
+/* Markdown 样式 */
+.markdown-body {
+  font-size: 14px;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--el-text-color-primary);
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body h4 {
+  font-size: 1em;
+}
+
+.markdown-body h5,
+.markdown-body h6 {
+  font-size: 0.875em;
+}
+
+.markdown-body p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 2em;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25em;
+}
+
+.markdown-body blockquote {
+  margin: 0 0 16px 0;
+  padding: 0 1em;
+  color: var(--el-text-color-secondary);
+  border-left: 0.25em solid var(--el-border-color);
+}
+
+.markdown-body code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: var(--el-fill-color);
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.markdown-body pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: var(--el-fill-color);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.markdown-body pre code {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  line-height: inherit;
+  background-color: transparent;
+  border: 0;
+}
+
+.markdown-body a {
+  color: var(--el-color-primary);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body strong {
+  font-weight: 600;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: var(--el-border-color);
+  border: 0;
+}
+
+.markdown-body table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 1px solid var(--el-border-color);
+}
+
+.markdown-body table tr {
+  background-color: transparent;
+  border-top: 1px solid var(--el-border-color);
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: var(--el-fill-color-lighter);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  box-sizing: content-box;
 }
 
 .keypoint-content {

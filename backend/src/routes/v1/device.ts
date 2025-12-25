@@ -15,6 +15,7 @@ import {
 import { deviceSchemas, commonSchemas, schemas } from "../../utils/schemas.js";
 import multer from "multer";
 import { aiProcessFile } from "../../utils/ai.js";
+import logger from "../../utils/logger.js";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
@@ -211,18 +212,25 @@ router.post(
 
     // 让前端先返回，后台异步处理AI任务
     aiProcessFile(url, record.id)
-      .then(async (content) => {
+      .then(async (result) => {
         await prisma.record.update({
           where: {
             id: record.id,
           },
           data: {
-            content,
+            content: result.content,
+            speakers: result.speakers,
+            keypoints: {
+              createMany: {
+                data: result.keypoints,
+              },
+            },
             status: "DONE",
           },
         });
       })
       .catch(async (err) => {
+        logger.error("AI processing failed for record %s: %o", record.id, err);
         await prisma.record.update({
           where: {
             id: record.id,

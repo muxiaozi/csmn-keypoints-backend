@@ -38,10 +38,44 @@ type TextPolishResponse = Array<{
   end: number;
 }>;
 
+type ParagraphSummaryTopic = {
+  title: string;
+  beginTime?: number;
+  topic: Array<ParagraphSummaryTopic>; // 递归嵌套子主题
+};
+
+type ParagraphSummary = {
+  paragraphSummary: string;
+  conversationalSummary: Array<{
+    speakerId: string;
+    speakerName: string;
+    summary: string;
+  }>;
+  questionsAnsweringSummary: Array<{
+    question: string;
+    sentenceIdsOfQuestion: Array<number>;
+    answer: string;
+    sentenceIdsOfAnswer: Array<number>;
+  }>;
+  mindMapSummary: Array<ParagraphSummaryTopic>;
+};
+
+export type ProcessResult = {
+  content: string;
+  speakers: string[];
+  keypoints: Array<{
+    time_point: number;
+    content: string;
+    speaker: string;
+  }>;
+};
+
 export async function aiProcessFile(
   fileUrl: string,
   recordId: string
-): Promise<string> {
+): Promise<ProcessResult> {
+  fileUrl = "https://pan.cheshuimanong.com/f/Xr3tA/pfdm-hr.wav";
+
   logger.info(
     "Starting AI processing for file: %s, recordId: %s",
     fileUrl,
@@ -54,7 +88,7 @@ export async function aiProcessFile(
   }
   logger.info("CreateTaskResponse: %o", createResponse);
   const dataId = createResponse.output.dataId;
-  const maxRetries = 30;
+  const maxRetries = 100;
   let retries = 0;
   let taskResponse;
   // 轮询获取任务结果
@@ -66,7 +100,9 @@ export async function aiProcessFile(
       break;
     } else if (taskResponse.output.status === 2) {
       logger.error("Tingwu task %s failed: %o", dataId, taskResponse);
-      throw new Error(`Tingwu getTask failed: ${taskResponse.output.errorMessage}`);
+      throw new Error(
+        `Tingwu getTask failed: ${taskResponse.output.errorMessage}`
+      );
     }
     logger.info("Tingwu task %s processing...", dataId);
     retries++;
@@ -81,15 +117,39 @@ export async function aiProcessFile(
     logger.error("Tingwu task %s has no textPolishPath", dataId);
     throw new Error("Tingwu task has no textPolishPath");
   }
-  const resp = await handleTextPolish(taskResponse.output.textPolishPath);
-  logger.info("TextPolishResponse: %o", resp);
+  // const textPolishResult = await handleTextPolish(
+  //   taskResponse.output.textPolishPath
+  // );
+  // logger.info("TextPolishResponse: %o", textPolishResult);
 
-  if (!resp[0]?.formalParagraphText) {
-    logger.error("Tingwu textPolishPath %s has no formalParagraphText", taskResponse.output.textPolishPath);
-    throw new Error("Tingwu textPolishPath has no formalParagraphText");
+  const summarizationResult = await handleSummarization(
+    taskResponse.output.summarizationPath
+  );
+  logger.info("ParagraphSummary: %o", summarizationResult);
+
+  let result: ProcessResult = {
+    content: "",
+    speakers: [],
+    keypoints: [],
+  };
+
+  // 获取@#符号前面的内容
+  let result_parts = summarizationResult.paragraphSummary.split("@#");
+  result.content = result_parts[0].trim() + "\n\n";
+  result.content += result_parts[1]?.trim();
+
+  for (const speaker of summarizationResult.conversationalSummary) {
+    if (!result.speakers.includes(speaker.speakerName)) {
+      result.speakers.push(speaker.speakerName);
+    }
+
+    result.keypoints.push({
+      time_point: 0,
+      content: speaker.summary,
+      speaker: speaker.speakerName,
+    });
   }
-  
-  return resp[0].formalParagraphText;
+  return result;
 }
 
 // 创建任务
@@ -179,7 +239,16 @@ export async function handleTextPolish(
     method: "GET",
   });
 
-  console.log("TextPolishResponse:", await response.clone().text());
+  return await response.json();
+}
+
+// 处理段落总结
+export async function handleSummarization(
+  url: string
+): Promise<ParagraphSummary> {
+  const response = await fetch(url, {
+    method: "GET",
+  });
 
   return await response.json();
 }
