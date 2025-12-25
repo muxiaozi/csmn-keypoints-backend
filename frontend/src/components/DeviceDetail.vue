@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import type { Device, ApiResponse } from '../types/device';
@@ -13,6 +13,15 @@ const device = ref<Device | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 let refreshTimer: number | null = null;
+
+// 响应式列数
+const isMobile = ref(window.innerWidth <= 768);
+const descriptionColumns = computed(() => isMobile.value ? 1 : 2);
+
+// 监听窗口大小变化
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
 
 const fetchDeviceDetail = async () => {
   loading.value = true;
@@ -116,10 +125,12 @@ const stopAutoRefresh = () => {
 onMounted(() => {
   fetchDeviceDetail();
   startAutoRefresh();
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   stopAutoRefresh();
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
@@ -147,7 +158,7 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="descriptionColumns" border>
             <el-descriptions-item label="设备名称">
               {{ device.name }}
             </el-descriptions-item>
@@ -181,7 +192,7 @@ onUnmounted(() => {
             <el-descriptions-item label="重启原因">
               {{ device.reset_reason }}
             </el-descriptions-item>
-            <el-descriptions-item label="描述" :span="2">
+            <el-descriptions-item label="描述" :span="descriptionColumns">
               {{ device.description }}
             </el-descriptions-item>
             <el-descriptions-item label="创建时间">
@@ -201,70 +212,63 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <el-table
-            :data="device.records"
-            stripe
-            style="width: 100%"
-            :empty-text="'暂无录音记录'"
-          >
-            <el-table-column prop="index" label="序号" width="80" />
-            <el-table-column prop="begin_time" label="开始时间" width="180">
-              <template #default="{ row }">
-                {{ formatDateTime(row.begin_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="duration_seconds" label="时长" width="100">
-              <template #default="{ row }">
-                {{ formatDuration(row.duration_seconds) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="size_bytes" label="大小" width="120">
-              <template #default="{ row }">
-                {{ formatBytes(row.size_bytes) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small">
-                  {{ getStatusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="speakers" label="说话人" width="120">
-              <template #default="{ row }">
-                <span v-if="row.speakers && row.speakers.length > 0">
-                  {{ row.speakers.join(', ') }}
-                </span>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="remark" label="备注" min-width="150">
-              <template #default="{ row }">
-                <span v-if="row.remark">{{ row.remark }}</span>
-                <span v-else class="text-muted">-</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="180" fixed="right">
-              <template #default="{ row }">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="viewRecord(row.index)"
-                >
-                  查看详情
-                </el-button>
-                <el-button
-                  type="success"
-                  size="small"
-                  :href="row.url"
-                  target="_blank"
-                  link
-                >
-                  下载
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="table-container">
+            <el-table
+              :data="device.records"
+              stripe
+              :style="{ width: isMobile ? 'auto' : '100%' }"
+              :empty-text="'暂无录音记录'"
+            >
+              <el-table-column prop="index" label="序号" :width="isMobile ? 60 : 80" />
+              <el-table-column prop="begin_time" label="开始时间" :width="isMobile ? 140 : 180">
+                <template #default="{ row }">
+                  {{ isMobile ? formatDateTime(row.begin_time).split(' ')[1] : formatDateTime(row.begin_time) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="duration_seconds" label="时长" :width="isMobile ? 70 : 100">
+                <template #default="{ row }">
+                  {{ formatDuration(row.duration_seconds) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="size_bytes" label="大小" :width="isMobile ? 80 : 120">
+                <template #default="{ row }">
+                  {{ formatBytes(row.size_bytes) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" :width="isMobile ? 70 : 100">
+                <template #default="{ row }">
+                  <el-tag :type="getStatusType(row.status)" size="small">
+                    {{ getStatusText(row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="speakers" label="说话人" width="120" class-name="mobile-hidden">
+                <template #default="{ row }">
+                  <span v-if="row.speakers && row.speakers.length > 0">
+                    {{ row.speakers.join(', ') }}
+                  </span>
+                  <span v-else class="text-muted">-</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="remark" label="备注" min-width="150" class-name="mobile-hidden">
+                <template #default="{ row }">
+                  <span v-if="row.remark">{{ row.remark }}</span>
+                  <span v-else class="text-muted">-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" :width="isMobile ? 70 : 100" :fixed="!isMobile ? 'right' : false">
+                <template #default="{ row }">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="viewRecord(row.index)"
+                  >
+                    查看
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </el-card>
       </template>
     </div>
@@ -306,7 +310,109 @@ onUnmounted(() => {
   color: #909399;
 }
 
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
 :deep(.el-descriptions__label) {
   width: 120px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .device-detail {
+    padding: 10px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .card-header {
+    font-size: 14px;
+  }
+
+  /* 设置描述列表在移动端为单列 */
+  :deep(.el-descriptions) {
+    --el-descriptions-item-bordered-label-width: 80px;
+  }
+
+  :deep(.el-descriptions__label) {
+    width: 80px !important;
+    font-size: 13px;
+  }
+
+  :deep(.el-descriptions__content) {
+    font-size: 13px;
+    word-break: break-word;
+  }
+
+  /* 表格在移动端优化 */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+
+  :deep(.el-button--small) {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  /* 隐藏说话人和备注列在移动端 */
+  :deep(.mobile-hidden) {
+    display: none !important;
+  }
+
+  /* 移动端取消固定列，避免空白 */
+  :deep(.el-table__fixed),
+  :deep(.el-table__fixed-right) {
+    display: none !important;
+  }
+
+}
+
+/* 小屏幕设备（如手机竖屏） */
+@media (max-width: 480px) {
+  .device-detail {
+    padding: 8px;
+  }
+
+  .content {
+    margin-top: 10px;
+  }
+
+  .info-card,
+  .records-card {
+    margin-bottom: 15px;
+  }
+
+  :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  /* 更紧凑的表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+
+  :deep(.el-button--small) {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import type { Record, ApiResponse } from '../types/device';
@@ -13,6 +13,15 @@ const recordId = route.params.record_id as string;
 const record = ref<Record | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+
+// 响应式列数
+const isMobile = ref(window.innerWidth <= 768);
+const descriptionColumns = computed(() => isMobile.value ? 1 : 2);
+
+// 监听窗口大小变化
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
 
 const fetchRecordDetail = async () => {
   loading.value = true;
@@ -115,6 +124,11 @@ const hasKeypoints = computed(() => {
 
 onMounted(() => {
   fetchRecordDetail();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
@@ -147,7 +161,7 @@ onMounted(() => {
             </div>
           </template>
 
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="descriptionColumns" border>
             <el-descriptions-item label="录音序号">
               {{ record.index }}
             </el-descriptions-item>
@@ -166,13 +180,13 @@ onMounted(() => {
             <el-descriptions-item label="CRC16">
               {{ record.crc16 }}
             </el-descriptions-item>
-            <el-descriptions-item label="说话人" :span="2">
+            <el-descriptions-item label="说话人" :span="descriptionColumns">
               <span v-if="record.speakers && record.speakers.length > 0">
                 {{ record.speakers.join(', ') }}
               </span>
               <span v-else class="text-muted">未识别</span>
             </el-descriptions-item>
-            <el-descriptions-item label="备注" :span="2">
+            <el-descriptions-item label="备注" :span="descriptionColumns">
               <span v-if="record.remark">{{ record.remark }}</span>
               <span v-else class="text-muted">无</span>
             </el-descriptions-item>
@@ -326,5 +340,117 @@ onMounted(() => {
 :deep(.el-timeline-item__timestamp) {
   font-weight: 600;
   color: #409eff;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .record-detail {
+    padding: 10px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .content {
+    margin-top: 15px;
+  }
+
+  .card-header {
+    font-size: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .info-card,
+  .player-card,
+  .content-card,
+  .keypoints-card {
+    margin-bottom: 15px;
+  }
+
+  /* 描述列表优化 */
+  :deep(.el-descriptions) {
+    --el-descriptions-item-bordered-label-width: 80px;
+  }
+
+  :deep(.el-descriptions__label) {
+    width: 80px !important;
+    font-size: 13px;
+  }
+
+  :deep(.el-descriptions__content) {
+    font-size: 13px;
+  }
+
+  /* 音频播放器 */
+  .audio-player-container {
+    padding: 10px 0;
+  }
+
+  /* 转写内容 */
+  .transcription-content {
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* 关键点卡片 */
+  .keypoint-text {
+    font-size: 13px;
+  }
+
+  :deep(.el-timeline) {
+    padding-left: 10px;
+  }
+
+  :deep(.el-timeline-item__wrapper) {
+    padding-left: 20px;
+  }
+
+  :deep(.el-timeline-item__timestamp) {
+    font-size: 12px;
+  }
+
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  /* 按钮优化 */
+  :deep(.el-button--small) {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
+/* 小屏幕设备（如手机竖屏） */
+@media (max-width: 480px) {
+  .record-detail {
+    padding: 8px;
+  }
+
+  .content {
+    margin-top: 10px;
+  }
+
+  .info-card,
+  .player-card,
+  .content-card,
+  .keypoints-card {
+    margin-bottom: 12px;
+  }
+
+  .transcription-content {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .keypoint-text {
+    font-size: 12px;
+  }
+
+  :deep(.el-page-header__content) {
+    font-size: 14px;
+  }
 }
 </style>

@@ -48,6 +48,11 @@ body {
   min-height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
+  overflow-x: hidden; /* 防止横向滚动 */
+}
+
+* {
+  box-sizing: border-box; /* 确保所有元素正确计算宽度 */
 }
 
 h1 {
@@ -83,4 +88,41 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%; /* 确保在移动端不超出屏幕 */
+}
+
+/* 移动端响应式适配 */
+@media (max-width: 768px) {
+  body {
+    display: block; /* 移动端不使用 flex 居中 */
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  #app {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .card {
+    padding: 1em;
+  }
+
+  button {
+    padding: 0.5em 1em;
+    font-size: 0.9em;
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 480px) {
+  #app {
+    padding: 0.5rem;
+  }
+
+  h1 {
+    font-size: 1.5em;
+  }
 }

@@ -38,6 +38,19 @@ onMounted(() => {
   z-index: 1000;
 }
 
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+  }
+
+  .theme-toggle :deep(.el-button) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
