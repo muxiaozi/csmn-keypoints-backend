@@ -1,19 +1,37 @@
 services:
-  app:
+  frontend:
     build:
-      context: .
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: csmn-keypoints-frontend
+    restart: unless-stopped
+    ports:
+      - "3002:80"  # 映射到宿主机 3002 端口
+    environment:
+      TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
       args:
          DATABASE_URL: ${DATABASE_URL}
     restart: unless-stopped
+    ports:
+      - "3001:80"
     environment:
       NODE_ENV: production
       TZ: Asia/Shanghai
-    env_file: .env
+    env_file: ./backend/.env
     volumes:
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
-    ports:
-      - "3001:3000"
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
     depends_on:
       - postgres
 
@@ -26,4 +44,4 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       TZ: Asia/Shanghai
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - ./backend/pgdata:/var/lib/postgresql/data

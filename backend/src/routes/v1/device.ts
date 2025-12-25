@@ -14,6 +14,7 @@ import {
 } from "../../middlewares/validation.js";
 import { deviceSchemas, commonSchemas, schemas } from "../../utils/schemas.js";
 import multer from "multer";
+import { aiProcessFile } from "../../utils/ai.js";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
@@ -188,6 +189,8 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { device_id, record_index } = req.params;
 
+    const url = `${process.env.BASE_URL}/v1/uploads/${req.file!.filename}`;
+
     const record = await prisma.record.update({
       where: {
         device_id_index: {
@@ -196,7 +199,7 @@ router.post(
         },
       },
       data: {
-        url: `${process.env.BASE_URL}/v1/uploads/${req.file!.filename}`,
+        url,
         path: `uploads/${req.file!.filename}`,
         status: "PROCESSING",
       },
@@ -206,9 +209,10 @@ router.post(
       return failed(res, "Record not found", 404);
     }
 
-    // 后台处理文件，不必await
-    // 这里使用SSE技术，可以实时推送处理进度到前端
-    // AIProcessFile(req.file!.path, device_id);
+    // 让前端先返回，后台异步处理AI任务
+    aiProcessFile(url)
+      .then((succeeded) => {})
+      .catch((err) => {});
 
     return success(res, record);
   })

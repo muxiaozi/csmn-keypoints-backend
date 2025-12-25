@@ -20,8 +20,6 @@ const router = Router();
 router.post(
   "/callback",
   asyncHandler(async (req: Request, res: Response) => {
-    logger.info("Receive body:", JSON.stringify(req.body));
-    logger.info("Receive query", JSON.stringify(req.query));
     return success(res, {});
   })
 );

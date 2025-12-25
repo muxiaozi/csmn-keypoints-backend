@@ -11,9 +11,13 @@ import {
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
+// import { createTask, aiProcessFile } from "./utils/ai.js";
+
 dotenv.config();
 
 const app = express();
+
+// aiProcessFile("https://open.cheshuimanong.com/keypoints/v1/uploads/cc817b6cf0fdfc653b3cc30020b2db9b");
 
 // Prisma客户端初始化
 const connectionString = `${process.env.DATABASE_URL}`;
@@ -40,7 +44,7 @@ app.use(notFoundHandler);
 // 全局错误处理 - 必须放在所有路由之后
 app.use(globalErrorHandler);
 
-const PORT = process.env.SERVER_PORT || 3000;
+const PORT = process.env.SERVER_PORT || 80;
 
 app.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);

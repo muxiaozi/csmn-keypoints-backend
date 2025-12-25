@@ -2,7 +2,7 @@ node_modules/
 dist/
 logs/
 .git/
-.postgres_data/
+pgdata/
 *.log
 .env
 .DS_Store
