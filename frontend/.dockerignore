@@ -4,7 +4,6 @@ dist
 .gitignore
 *.log
 .DS_Store
-.env
 .vscode
 *.md
 docker-compose.yml
