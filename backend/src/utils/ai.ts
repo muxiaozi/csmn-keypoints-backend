@@ -61,6 +61,7 @@ type ParagraphSummary = {
 };
 
 export type ProcessResult = {
+  summary: string;
   content: string;
   speakers: string[];
   keypoints: Array<{
@@ -84,7 +85,6 @@ export async function aiProcessFile(
   if (createResponse?.code !== undefined) {
     throw new Error(`Tingwu createTask failed: ${createResponse.message}`);
   }
-  logger.info("CreateTaskResponse: %o", createResponse);
   const dataId = createResponse.output.dataId;
   const maxRetries = 100;
   let retries = 0;
@@ -94,47 +94,37 @@ export async function aiProcessFile(
     await new Promise((resolve) => setTimeout(resolve, 3000)); // 等待3秒
     taskResponse = await getTask(dataId);
     if (taskResponse.output.status === 0) {
-      logger.info("Tingwu task %s succeeded: %o", dataId, taskResponse);
       break;
     } else if (taskResponse.output.status === 2) {
-      logger.error("Tingwu task %s failed: %o", dataId, taskResponse);
       throw new Error(
         `Tingwu getTask failed: ${taskResponse.output.errorMessage}`
       );
     }
-    logger.info("Tingwu task %s processing...", dataId);
     retries++;
   }
   if (retries === maxRetries) {
-    logger.error("Tingwu task %s timed out", dataId);
     throw new Error("Tingwu getTask timed out");
   }
-  logger.info("GetTaskResponse: %o", taskResponse);
+
   // 解析结果并存储到数据库或文件系统
   if (!taskResponse?.output.textPolishPath) {
-    logger.error("Tingwu task %s has no textPolishPath", dataId);
     throw new Error("Tingwu task has no textPolishPath");
   }
-  // const textPolishResult = await handleTextPolish(
-  //   taskResponse.output.textPolishPath
-  // );
-  // logger.info("TextPolishResponse: %o", textPolishResult);
 
   const summarizationResult = await handleSummarization(
     taskResponse.output.summarizationPath
   );
-  logger.info("ParagraphSummary: %o", summarizationResult);
 
   let result: ProcessResult = {
+    summary: "",
     content: "",
     speakers: [],
     keypoints: [],
   };
 
-  // 获取@#符号前面的内容
   let result_parts = summarizationResult.paragraphSummary.split("@#");
-  result.content = result_parts[0].trim() + "\n\n";
-  result.content += result_parts[1]?.trim();
+  result.summary = result_parts[0]?.trim();
+  result.content = result_parts[1]?.trim();
 
   for (const speaker of summarizationResult.conversationalSummary) {
     if (!result.speakers.includes(speaker.speakerName)) {

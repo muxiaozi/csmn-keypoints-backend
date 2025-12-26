@@ -218,6 +218,7 @@ router.post(
             id: record.id,
           },
           data: {
+            remark: result.summary,
             content: result.content,
             speakers: result.speakers,
             keypoints: {
