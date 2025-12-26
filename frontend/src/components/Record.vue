@@ -106,12 +106,14 @@ const formatDateTime = (dateString: string): string => {
 
 const getStatusType = (status: string) => {
   switch (status) {
-    case "COMPLETED":
+    case "DONE":
       return "success";
     case "PROCESSING":
       return "warning";
-    case "FAILED":
+    case "PROCESS_FAILED":
       return "danger";
+    case 'UPLOADING':
+      return 'info';
     default:
       return "info";
   }
@@ -119,12 +121,14 @@ const getStatusType = (status: string) => {
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case "COMPLETED":
+    case "DONE":
       return "已完成";
     case "PROCESSING":
       return "处理中";
-    case "FAILED":
+    case "PROCESS_FAILED":
       return "失败";
+    case 'UPLOADING':
+      return '上传中';
     default:
       return status;
   }

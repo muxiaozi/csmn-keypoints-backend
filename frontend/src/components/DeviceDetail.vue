@@ -84,6 +84,8 @@ const getStatusType = (status: string) => {
       return 'warning';
     case 'PROCESS_FAIL':
       return 'danger';
+    case 'UPLOADING':
+      return 'info';
     default:
       return 'info';
   }
