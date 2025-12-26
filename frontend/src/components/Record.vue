@@ -110,7 +110,7 @@ const getStatusType = (status: string) => {
       return "success";
     case "PROCESSING":
       return "warning";
-    case "PROCESS_FAILED":
+    case "PROCESS_FAIL":
       return "danger";
     case 'UPLOADING':
       return 'info';
@@ -125,7 +125,7 @@ const getStatusText = (status: string) => {
       return "已完成";
     case "PROCESSING":
       return "处理中";
-    case "PROCESS_FAILED":
+    case "PROCESS_FAIL":
       return "失败";
     case 'UPLOADING':
       return '上传中';
